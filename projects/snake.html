@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="brettengine.js"></script>
+
+    <meta charset="UTF-8">
+    <title>Brett's Snake</title>
+    <style>
+        canvas {
+            display: block;
+            position: absolute;
+            margin: auto;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+<h3>Snake by Brett Fisher</h3>
+<script>
+    var Game = {
+        //Canvas constants
+        CANVAS_BLOCK_WIDTH: 20,
+        CANVAS_BLOCK_HEIGHT: 20,
+        CANVAS_BLOCK_SIZE: 25,
+        CANVAS_WIDTH: 500,
+        CANVAS_HEIGHT: 500,
+        //Context for drawing
+        Context: null,
+        score: 0,
+        timeLeft: 0,
+        STARTING_TIME: 60,
+        INTERVAL_STEP: 125,     //how many milliseconds per frame
+        //Game map array and drawing function
+        gameMap: [],
+        foodExists: false,      //tells whether there is food on the board or not
+        Mode: {
+            torrodial: true,
+            electric: false,
+            fence: false
+        },
+        drawGameMap: function() {
+            Game.Context.save();
+          for(var i=0; i<Game.gameMap.length; i++) {
+              for(var j =0; j < Game.gameMap[i].length; j++) {
+                  switch(Game.gameMap[i][j]) {
+                      case Game.Snake.EMPTY:
+                          Game.Context.fillStyle = "white";
+                          break;
+                      case Game.Snake.SNAKE:
+                          Game.Context.fillStyle = "blue";
+                          break;
+                      case Game.Snake.FOOD:
+                          Game.Context.fillStyle = "red";
+                          break;
+                  }
+                  Game.Context.fillRect(j*Game.CANVAS_BLOCK_SIZE, i*Game.CANVAS_BLOCK_SIZE,
+                                        Game.CANVAS_BLOCK_SIZE, Game.CANVAS_BLOCK_SIZE);
+              }
+          }
+            Game.Context.restore();
+        },
+        reset: function() {
+          //clear the snake
+            while(this.Snake.segments.length) {
+                this.Snake.removeTail();
+            }
+            this.Snake.init(15, 15);
+            this.Snake.direction = this.Snake.UP;
+            Game.score = 0;
+            Game.timeLeft = Game.STARTING_TIME;
+        },
+        //Draw the white background
+        clearCanvas: function() {
+            Game.Context.save();
+            Game.Context.fillStyle = "white";
+            for(var i=0; i<Game.gameMap.length; i++) {
+                for(var j =0; j < Game.gameMap[i].length; j++) {
+                    Game.Context.fillRect(j*Game.CANVAS_BLOCK_SIZE, i*Game.CANVAS_BLOCK_SIZE,
+                            Game.CANVAS_BLOCK_SIZE, Game.CANVAS_BLOCK_SIZE);
+                }
+            }
+            Game.Context.restore();
+        },
+        //Insert food at a random place
+        //ForbidX and forbidY are optional coordinates for somewhere
+        //the food is forbidden to be
+        insertFood(forbidX, forbidY) {
+            while(!Game.foodExists) {
+                var x = Math.floor(Math.random()*Game.CANVAS_BLOCK_WIDTH);
+                var y = Math.floor(Math.random()*Game.CANVAS_BLOCK_HEIGHT);
+                if(forbidX && forbidY) {
+                    if (x == forbidX && y == forbidY) {
+                        continue;
+                    }
+                }
+                if(Game.gameMap[y][x] == Game.Snake.EMPTY) {
+                    Game.foodExists = true;
+                    Game.gameMap[y][x] = Game.Snake.FOOD;
+                }
+            }
+        },
+        //Update drawing, moving the snake, generating food, etc.
+        update: function() {
+          //Find a random place to put the food
+            Game.insertFood();
+            //Update the map
+            Game.Snake.update();
+            //Game.clearCanvas();
+            Game.drawGameMap();
+            Game.Context.font = "18px Arial";
+            Game.Context.fillText("Score: " + Game.score, 15, 470);
+            Game.timeLeft -= (Game.INTERVAL_STEP / 1000);
+            Game.Context.fillText("Time: " + Math.ceil(Game.timeLeft), 400, 470);
+            if(Game.timeLeft <= 0) {
+                Game.reset();
+            }
+        },
+        //Snake object
+        Snake: {
+            //Grid constants
+            EMPTY: 0,
+            SNAKE: 1,
+            FOOD: 2,
+            //Direction constants
+            LEFT: 0,
+            RIGHT: 1,
+            UP: 2,
+            DOWN: 3,
+            direction: 2,       //current direction the snake is moving
+            //Snake body
+            segments: [],
+            insertHead: function(x, y){
+                this.segments.unshift({x: x, y:y});
+                Game.gameMap[y][x] = Game.Snake.SNAKE;
+            },
+            removeTail: function() {
+                var tail = this.segments.pop();
+                Game.gameMap[tail.y][tail.x] = Game.Snake.EMPTY;
+            },
+            //see if the snake has eaten itself
+            selfCollision: function() {
+                var head = this.segments[0];
+                for(var i = 1; i < this.segments.length; i++) {
+                    if(this.segments[i].x == head.x && this.segments[i].y == head.y) {
+                        return true;
+                    }
+                }
+                return false;
+            },
+            //Update function, moves the snake
+            update: function() {
+                /*if(this.selfCollision()){
+                    Game.reset();
+                    return;
+                }*/
+                //Change the direction based on the keystroke
+                if(KeyState.left && this.direction != this.RIGHT) {
+                    this.direction = this.LEFT;
+                }
+                if(KeyState.right && this.direction != this.LEFT) {
+                    this.direction = this.RIGHT;
+                }
+                if(KeyState.up && this.direction != this.DOWN) {
+                    this.direction = this.UP;
+                }
+                if(KeyState.down && this.direction != this.UP) {
+                    this.direction = this.DOWN;
+                }
+                var head = this.segments[0];
+                var nextX = head.x;
+                var nextY = head.y;
+                //Move the snake
+                switch(this.direction) {
+                    case this.LEFT:
+                        nextX -= 1;
+                        break;
+                    case this.RIGHT:
+                        nextX += 1;
+                        break;
+                    case this.UP:
+                        nextY -= 1;
+                        break;
+                    case this.DOWN:
+                        nextY += 1;
+                        break;
+                }
+                //Check the game mode
+                if(Game.Mode.torrodial) {           //wrap when you go offscreen
+                    nextX %= Game.CANVAS_BLOCK_WIDTH;
+                    nextY %= Game.CANVAS_BLOCK_HEIGHT;
+                    //Torrodial, keep things in bounds
+                    if (nextX < 0) {
+                        nextX = Game.CANVAS_BLOCK_WIDTH - 1;
+                    }
+                    if (nextY < 0) {
+                        nextY = Game.CANVAS_BLOCK_HEIGHT - 1;
+                    }
+                } else if(Game.Mode.electric) {     //die if you go offscreen
+                    if(nextX < 0 || nextX >= Game.CANVAS_BLOCK_WIDTH) {
+                        Game.reset();
+                        return;
+                    }
+                    if(nextY < 0 || nextY >= Game.CANVAS_BLOCK_HEIGHT) {
+                        Game.reset();
+                        return;
+                    }
+                }
+                //Eaten food
+                if(Game.gameMap[nextY][nextX] == Game.Snake.FOOD) {
+                    Game.foodExists = false;
+                    Game.score += 1;
+                }
+                //Eaten self
+                else if(Game.gameMap[nextY][nextX] == Game.Snake.SNAKE) {
+                    Game.reset();
+                    return;
+                }
+                if(Game.foodExists) {
+                    this.removeTail();
+                } else {
+                    Game.gameMap[nextY][nextX] = this.EMPTY;
+                    Game.insertFood(nextX, nextY);
+                }
+                this.insertHead(nextX, nextY);
+            },
+            init(x, y) {
+                this.segments.push({x: x, y:y});
+            }
+        },
+        //Initialize the game
+        init: function() {
+            Game.timeLeft = Game.STARTING_TIME;
+            //Initialize canvas
+            Game.Context = new Context('canvas');
+            //Initialize canvas dimensions
+            Game.CANVAS_WIDTH = Game.CANVAS_BLOCK_WIDTH*Game.CANVAS_BLOCK_SIZE;
+            Game.CANVAS_HEIGHT = Game.CANVAS_BLOCK_HEIGHT*Game.CANVAS_BLOCK_SIZE;
+            //Initialize the game map
+            for(var i=0; i < Game.CANVAS_BLOCK_HEIGHT; i++) {
+                var row = [];
+                for(var j = 0; j < Game.CANVAS_BLOCK_WIDTH; j++) {
+                    row.push(Game.Snake.EMPTY);
+                }
+                Game.gameMap.push(row);
+            }
+            //Initialize snake
+            Game.Snake.init(15, 15);
+            //Initialize keyboard controls, canvas, etc.
+            init(Game.Context, Game.CANVAS_WIDTH, Game.CANVAS_HEIGHT);
+        }
+    };
+    $(document).ready(function() {
+        Game.init();
+        setInterval(function() {
+            Game.update();
+        }, Game.INTERVAL_STEP);
+    });
+</script>
+
+<canvas id="canvas"></canvas>
+</body>
+</html>

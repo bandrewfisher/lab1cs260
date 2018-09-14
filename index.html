@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Fisher Portfolio</title>
+        <link type="text/css" rel="stylesheet" href="main.css">
+    </head>
+    
+    <body>
+        
+            <div id="header">
+                <ul class="navbar">
+                    <li><a href="index.html">Home</a></li>
+                </ul>
+            </div>
+            <div id="contentMain">
+            <h1>Brett Fisher's Portfolio</h1>
+            
+            <div id="About">
+
+                    <h2>About</h2>
+                    <img src="brettphoto.jpeg" height="100px">
+                    <p>Hello! My name is Brett Fisher. I am a Computer Science student at BYU and love to program.
+                        My interests are playing the piano, reading books, and coding. I served an LDS mission in the Philippines
+                        and love Filipino food.
+                        Use this website to see my programming projects and my portfolio in general.</p>
+
+            </div>
+            
+            <div id="Projects">
+                <h2>Projects I've Made</h2>
+                <ol>
+                    <li><a href="projects/checkers.php">JavaScript Checkers</a></li>
+                    <li><a href="projects/snake.html">JavaScript Snake</a></li>
+                    <li><a href="http://hackerfish.com">Personal Blog</a></li>
+                </ol>
+            </div>
+            
+            <div>
+                <h2>Work Experience</h2>
+                <img src="byu.png" height="100px">
+                <p>I am currently employed at the Center for Learning and Teaching at Brigham Young University
+                as a web developer. We work on the university's website for grades and assignments, learningsuite.byu.edu.
+                Learn more about it by clicking on <a href="https://ctl.byu.edu/tool/byu-learning-suite">this link</a>.</p>
+            </div>
+            
+            <div>
+                <h2>Links</h2>
+                <ul>
+                    <li><a href="https://github.com/bandrewfisher">Github</a></li>
+                    <li><a href="https://www.linkedin.com/in/brett-fisher-82580416b/">LinkedIn</a></li>
+                </ul>
+            </div>
+            
+            <div>
+                <h2>Comments</h2>
+                <input type="text" id="comment" placeholder="Add a comment">
+                <button onclick="addComment(event);">Submit Comment</button>
+                <br>
+                <select id="commentColor">
+                    <option value="null">Change Comment Color</option>
+                    <option value="black">Black</option>
+                    <option value="green">Green</option>
+                    <option value="blue">Blue</option>
+                    <option value="orange">Orange</option>
+                    <option value="purple">Purple</option>
+                </select>
+                <ul id="commentUl"></ul>
+            </div>
+        </div>
+        
+        <div id="footer">
+            <span>Made by Brett Fisher</span>    
+        </div>
+        
+        <script>
+            
+            var selectCommentColor = document.getElementById('commentColor');
+            selectCommentColor.addEventListener("change", changeCommentColor);
+            
+            function addComment(event) {
+                var commentInput = document.getElementById('comment');
+                var comment = commentInput.value;
+                var li = document.createElement('li');
+                li.setAttribute('class', 'comment');
+                li.innerHTML = comment;
+
+                
+                var ulist = document.getElementById('commentUl');
+                ulist.appendChild(li);
+                commentInput.value = null;
+                changeCommentColor();
+            }
+            
+            function changeCommentColor() {
+                var comments = document.getElementsByClassName('comment');
+                var select = document.getElementById("commentColor");
+                var commentColor = select.options[select.selectedIndex].value;
+                for(var i=0; i<comments.length; i++) {
+                    if(commentColor != "null") {
+                        comments[i].style.color = commentColor;
+                    }
+                }
+            }
+        </script>
+    </body>
+    
+</html>
